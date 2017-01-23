@@ -85,6 +85,24 @@ func Open(dialect string, args ...interface{}) (*DB, error) {
 	return &db, err
 }
 
+func OpenWithDbConnection(dialect string, dbSQL *sql.DB) (*DB, error) {
+	var db = DB{
+		dialect:   newDialect(dialect, dbSQL),
+		logger:    defaultLogger,
+		callbacks: DefaultCallback,
+		values:    map[string]interface{}{},
+		db:        dbSQL,
+	}
+	db.parent = &db
+
+	var err = db.DB().Ping() // Send a ping to make sure the database connection is alive.
+	if err != nil {
+		db.DB().Close()
+	}
+
+	return &db, err
+}
+
 // Close close current db connection
 func (s *DB) Close() error {
 	return s.parent.db.(*sql.DB).Close()
